@@ -5,3 +5,5 @@ export type Booking = {
   end: string;
   title?: string;
 };
+
+export type BookingInput = Omit<Booking, "id">;
