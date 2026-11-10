@@ -8,7 +8,7 @@ type Result = {
   error: string | null;
 };
 
-export function useBookings(date: string) {
+export const useBookings = (date: string) => {
   const [revision, setRevision] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
   const requestKey = `${date}:${revision}`;

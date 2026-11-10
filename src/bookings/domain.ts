@@ -47,3 +47,20 @@ export function validateBookingSlot(
 
   return isOccupied ? { kind: "conflict", message: "Это время уже занято" } : null;
 }
+
+export function hasBookingStarted(
+  booking: Pick<Booking, "date" | "start">,
+  now: number,
+): boolean {
+  return Date.parse(`${booking.date}T${booking.start}:00Z`) <= now;
+}
+
+export function getEarliestBookingStart(date: string, now: number): string | null {
+  const nextMinute = Math.ceil(now / 60_000) * 60_000;
+  const earliest = Math.max(nextMinute, Date.parse(`${date}T09:00:00Z`));
+  const latest = Date.parse(`${date}T17:30:00Z`);
+
+  return earliest <= latest
+    ? new Date(earliest).toISOString().slice(11, 16)
+    : null;
+}

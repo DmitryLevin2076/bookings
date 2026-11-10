@@ -1,16 +1,52 @@
-import { useState } from "react";
-import { useBookings } from "./bookings/useBookings";
+import { useEffect, useState } from "react";
+import { deleteBooking } from "./bookings/api";
 import { BookingForm } from "./bookings/BookingForm";
+import { getEarliestBookingStart, hasBookingStarted } from "./bookings/domain";
+import type { Booking } from "./bookings/types";
+import { useBookings } from "./bookings/useBookings";
 
 export default function App() {
+  const [now, setNow] = useState<number>(() => Date.now());
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [form, setForm] = useState<{ booking?: Booking } | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const { bookings, isLoading, error, reload } = useBookings(date);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const canCreate = getEarliestBookingStart(date, now) !== null;
 
   const sortedBookings = [...bookings].sort((a, b) =>
     a.start.localeCompare(b.start),
   );
+
+  const refreshDay = (nextDate: string) => {
+    setDate(nextDate);
+    reload();
+  }
+
+  const handleDelete = async (id: string) => {
+    if (deletingId !== null || !window.confirm("Удалить эту бронь?")) return;
+
+    setDeleteError(null);
+    setDeletingId(id);
+
+    try {
+      await deleteBooking(id);
+      reload();
+    } catch (error: unknown) {
+      setDeleteError(
+        error instanceof Error ? error.message : "Не удалось удалить бронь",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   return (
     <main>
@@ -22,9 +58,12 @@ export default function App() {
         <input
           type="date"
           value={date}
-          disabled={isFormOpen}
+          disabled={form !== null || deletingId !== null}
           onChange={(event) => {
-            if (event.target.value) setDate(event.target.value);
+            if (event.target.value) {
+              setDate(event.target.value);
+              setDeleteError(null);
+            }
           }}
         />
       </label>
@@ -36,7 +75,9 @@ export default function App() {
       {error && (
         <>
           <p role="alert">{error}</p>
-          <button type="button" onClick={reload}>Повторить</button>
+          <button type="button" onClick={reload}>
+            Повторить
+          </button>
         </>
       )}
 
@@ -49,26 +90,54 @@ export default function App() {
           {sortedBookings.map((booking) => (
             <li key={booking.id}>
               {booking.start}–{booking.end} · {booking.title || "Бронь"}
+
+              {!form && !hasBookingStarted(booking, now) && (
+                <>
+                  <button
+                    type="button"
+                    disabled={deletingId !== null}
+                    onClick={() => setForm({ booking })}
+                  >
+                    Редактировать
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={deletingId !== null}
+                    onClick={() => void handleDelete(booking.id)}
+                  >
+                    {deletingId === booking.id ? "Удаляем…" : "Удалить"}
+                  </button>
+                </>
+              )}
             </li>
           ))}
         </ul>
       )}
 
-      {isFormOpen ? (
+      {!form && !canCreate && (
+        <p>На выбранную дату не осталось времени для новой брони.</p>
+      )}
+
+      {deleteError && <p role="alert">{deleteError}</p>}
+
+      {form ? (
         <BookingForm
+          now={now}
           date={date}
-          onSaved={() => {
-            setIsFormOpen(false);
-            reload();
+          booking={form.booking}
+          onSaved={(savedDate) => {
+            setForm(null);
+            refreshDay(savedDate);
           }}
-          onConflict={reload}
-          onCancel={() => setIsFormOpen(false)}
+          onConflict={refreshDay}
+          onCancel={() => setForm(null)}
         />
       ) : (
         <button
           type="button"
-          disabled={date < new Date().toISOString().slice(0, 10)}
-          onClick={() => setIsFormOpen(true)}
+          disabled={deletingId !== null || !canCreate}
+          onClick={() => setForm({})}
         >
           Новая бронь
         </button>
