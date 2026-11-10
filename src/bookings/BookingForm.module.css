@@ -1,0 +1,87 @@
+.form {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--white);
+}
+
+.form h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.fields,
+.fields label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.fields {
+  gap: 14px;
+  margin: 14px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.fields label {
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.fields input {
+  width: 100%;
+  min-width: 0;
+  font-size: 16px;
+}
+
+.times {
+  display: flex;
+  gap: 12px;
+}
+
+.times > label {
+  flex: 1;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.form button[type="submit"]:not(:disabled) {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: var(--white);
+}
+
+.form button[type="submit"]:hover:not(:disabled) {
+  background: var(--blue-hover);
+}
+
+.hint {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--error-bg);
+  color: var(--red);
+}
+
+@media (max-width: 540px) {
+  .times {
+    flex-direction: column;
+  }
+
+  .times > label {
+    flex: none;
+  }
+}

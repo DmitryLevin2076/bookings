@@ -3,6 +3,7 @@ import type { SubmitEvent } from "react";
 import { ApiError, createBooking, updateBooking } from "./api";
 import { getEarliestBookingStart } from "./domain";
 import type { Booking } from "./types";
+import styles from "./BookingForm.module.css";
 
 type Props = {
   now: number;
@@ -64,14 +65,14 @@ export const BookingForm: FC<Props> = (props) => {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className={styles.form} onSubmit={handleSubmit}>
       <h2>{booking ? "Редактирование брони" : "Новая бронь"}</h2>
-      {!booking && <p>{targetDate} · UTC</p>}
+      {!booking && <p className={styles.hint}>{targetDate} · UTC</p>}
 
-      <fieldset disabled={isSaving}>
+      <fieldset className={styles.fields} disabled={isSaving}>
         {booking && (
           <label>
-            Дата (UTC){" "}
+            Дата (UTC)
             <input
               name="date"
               type="date"
@@ -82,50 +83,52 @@ export const BookingForm: FC<Props> = (props) => {
           </label>
         )}
 
-        <label>
-          Начало{" "}
-          <input
-            name="start"
-            type="time"
-            min={minStart ?? "09:00"}
-            max="17:30"
-            defaultValue={booking?.start}
-            required
-          />
-        </label>
+        <div className={styles.times}>
+          <label>
+            Начало (UTC)
+            <input
+              name="start"
+              type="time"
+              min={minStart ?? "09:00"}
+              max="17:30"
+              defaultValue={booking?.start}
+              required
+            />
+          </label>
+
+          <label>
+            Окончание (UTC)
+            <input
+              name="end"
+              type="time"
+              min="09:00"
+              max="18:00"
+              defaultValue={booking?.end}
+              required
+            />
+          </label>
+        </div>
 
         <label>
-          Окончание{" "}
-          <input
-            name="end"
-            type="time"
-            min="09:00"
-            max="18:00"
-            defaultValue={booking?.end}
-            required
-          />
-        </label>
-
-        <label>
-          Название{" "}
+          Название (необязательно)
           <input name="title" type="text" defaultValue={booking?.title} />
         </label>
 
         {targetDate && minStart === null && (
-          <p role="status">
+          <p className={styles.hint} role="status">
             На выбранную дату не осталось времени для брони от 30 минут.
           </p>
         )}
 
-        <button type="submit" disabled={minStart === null}>
-          {isSaving ? "Сохраняем…" : "Сохранить"}
-        </button>
-        <button type="button" onClick={onCancel}>
-          Отмена
-        </button>
-      </fieldset>
+        {error && <p className={styles.error} role="alert">{error}</p>}
 
-      {error && <p role="alert">{error}</p>}
+        <div className={styles.actions}>
+          <button type="submit" disabled={minStart === null}>
+            {isSaving ? "Сохраняем…" : "Сохранить"}
+          </button>
+          <button type="button" onClick={onCancel}>Отмена</button>
+        </div>
+      </fieldset>
     </form>
   );
 }
